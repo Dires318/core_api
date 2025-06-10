@@ -68,7 +68,8 @@ def login_view(request):
             'username': user.username,
             'email': user.email,
             'first_name': user.first_name,
-            'last_name': user.last_name
+            'last_name': user.last_name,
+            'middle_name': user.middle_name
         }
     })
     
@@ -141,6 +142,7 @@ def register_view(request):
     password = request.data.get('password')
     email = request.data.get('email')
     first_name = request.data.get('first_name')
+    middle_name = request.data.get('middle_name')
     last_name = request.data.get('last_name')
     
     if not all([username, password, email]):
@@ -166,7 +168,8 @@ def register_view(request):
         email=email,
         password=password,
         first_name=first_name or '',
-        last_name=last_name or ''
+        last_name=last_name or '',
+        middle_name=middle_name or ''
     )
     
     refresh = RefreshToken.for_user(user)
@@ -221,34 +224,13 @@ def refresh_token_view(request):
         token = RefreshToken(refresh_token)
         response = Response({'detail': 'Token refreshed successfully.'})
         
-        # Set cookies with proper configuration
-        response.set_cookie(
-            'access_token',
-            str(token.access_token),
-            expires=datetime.now() + settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-            secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-            httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
-            path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
-            domain=None  # Allow cookies to work on localhost
-        )
-        
-        response.set_cookie(
-            'refresh_token',
-            str(token),
-            expires=datetime.now() + settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
-            secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-            httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
-            path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
-            domain=None  # Allow cookies to work on localhost
-        )
+        set_auth_cookies(response, token.access_token, token)
         
         return response
     except Exception as e:
         return Response(
             {'detail': 'Invalid refresh token.'},
-            status=status.HTTP_401_UNAUTHORIZED
+            status=status.HTTP_400_BAD_REQUEST
         )
 
 @api_view(['GET'])
@@ -262,6 +244,7 @@ def get_current_user(request):
         'email': user.email,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'middle_name': user.middle_name,
         'date_joined': user.date_joined,
         'last_login': user.last_login
     })
