@@ -1,0 +1,7 @@
+__pycache__/
+migrations/
+run.sh
+.env
+db.sqlite3
+venv/
+migrate_all.sh
